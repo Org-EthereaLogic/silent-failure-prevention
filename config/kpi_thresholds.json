@@ -1,0 +1,46 @@
+{
+  "gates": [
+    {
+      "name": "stability_health_score",
+      "type": "FAIL",
+      "operator": ">=",
+      "threshold": 0.70,
+      "description": "Block Gold refresh when overall distribution stability degrades"
+    },
+    {
+      "name": "bronze_record_fidelity_ratio",
+      "type": "FAIL",
+      "operator": ">=",
+      "threshold": 0.99,
+      "description": "Protect against row loss between source and target"
+    },
+    {
+      "name": "silver_quality_pass_ratio",
+      "type": "FAIL",
+      "operator": ">=",
+      "threshold": 0.95,
+      "description": "Rule-based Silver quality pass rate"
+    },
+    {
+      "name": "provenance_field_coverage",
+      "type": "FAIL",
+      "operator": ">=",
+      "threshold": 1.0,
+      "description": "Require a complete run context and audit envelope"
+    },
+    {
+      "name": "columns_drifted_ratio",
+      "type": "WARN",
+      "operator": "<=",
+      "threshold": 0.20,
+      "description": "Highlight broad instability across monitored columns"
+    },
+    {
+      "name": "silver_quarantine_ratio",
+      "type": "WARN",
+      "operator": "<=",
+      "threshold": 0.10,
+      "description": "Quarantined-record volume threshold"
+    }
+  ]
+}
