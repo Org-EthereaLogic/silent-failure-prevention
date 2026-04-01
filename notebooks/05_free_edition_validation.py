@@ -19,11 +19,10 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install git+https://github.com/Org-EthereaLogic/silent-failure-prevention.git
-
-# COMMAND ----------
-
-dbutils.library.restartPython()
+import subprocess, sys
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
+                       "git+https://github.com/Org-EthereaLogic/silent-failure-prevention.git"])
+print("Package installed successfully.")
 
 # COMMAND ----------
 
@@ -52,7 +51,7 @@ print(f"Monitored: {MONITORED_COLUMNS}")
 
 # COMMAND ----------
 
-display(spark.createDataFrame(baseline_df[["record_id"] + MONITORED_COLUMNS].head(10)))
+display(baseline_df[["record_id"] + MONITORED_COLUMNS].head(10))
 
 # COMMAND ----------
 
@@ -63,7 +62,7 @@ display(spark.createDataFrame(baseline_df[["record_id"] + MONITORED_COLUMNS].hea
 
 # COMMAND ----------
 
-display(spark.createDataFrame(drifted_df[["record_id"] + MONITORED_COLUMNS].head(10)))
+display(drifted_df[["record_id"] + MONITORED_COLUMNS].head(10))
 
 # COMMAND ----------
 
@@ -89,7 +88,7 @@ column_evidence = pd.DataFrame([
     for cr in drift_result.column_results
 ])
 
-display(spark.createDataFrame(column_evidence))
+display(column_evidence)
 
 # COMMAND ----------
 
@@ -107,7 +106,7 @@ summary = pd.DataFrame([{
     "rows_current": drift_result.row_count_current,
 }])
 
-display(spark.createDataFrame(summary))
+display(summary)
 
 # COMMAND ----------
 
@@ -117,17 +116,9 @@ display(spark.createDataFrame(summary))
 # COMMAND ----------
 
 from stability.gates.evaluator import load_gate_configs, evaluate_gates
-import importlib.resources as pkg_resources
 from pathlib import Path
 import json
 
-# Load gate configs from the installed package's config directory
-config_candidates = [
-    Path("config/kpi_thresholds.json"),
-    Path("/tmp/kpi_thresholds.json"),
-]
-
-# Write the config inline if not found on disk
 config_data = {
     "gates": [
         {"name": "stability_health_score", "type": "FAIL", "operator": ">=",
@@ -171,7 +162,7 @@ gate_evidence = pd.DataFrame([
     for gr in gate_results
 ])
 
-display(spark.createDataFrame(gate_evidence))
+display(gate_evidence)
 
 # COMMAND ----------
 
@@ -211,7 +202,7 @@ provenance_summary = pd.DataFrame([{
     "provenance_coverage": provenance.provenance_field_coverage,
 }])
 
-display(spark.createDataFrame(provenance_summary))
+display(provenance_summary)
 
 # COMMAND ----------
 
