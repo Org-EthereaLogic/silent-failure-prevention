@@ -44,6 +44,6 @@ PYTHONPATH=src python -m stability.sample_data
 
 ## What Does Not Exist Yet
 
-- No verified live Databricks workspace execution evidence in this repository.
+- Databricks Free Edition execution evidence is captured in `docs/images/ch2/`. Production Databricks execution is not yet evidenced.
 - No production dataset validation or external telemetry proof.
 - No justification for claims beyond the checked-in local release-control surface.

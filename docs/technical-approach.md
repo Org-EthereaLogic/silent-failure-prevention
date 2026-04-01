@@ -160,6 +160,11 @@ PYTHONPATH=src python -m stability.runners
 `notebooks/04_stability_deep_dive.py` follows the same control path in a
 Databricks-style notebook format for interactive review.
 
+### Databricks Free Edition
+
+`notebooks/05_free_edition_validation.py` runs the same control path in a live
+Databricks Free Edition workspace. Evidence screenshots are in `docs/images/ch2/`.
+
 ## Repository artifacts
 
 - `data/sample/baseline.csv`

@@ -27,6 +27,29 @@ locally with `PYTHONPATH=src python -m stability.runners`:
 This is the intended control behavior: the data shape still looks healthy, but
 the business signal has collapsed in four monitored columns.
 
+## Databricks Free Edition evidence
+
+The same release-control pattern was validated in a live Databricks Free Edition
+workspace by running
+[`notebooks/05_free_edition_validation.py`](notebooks/05_free_edition_validation.py).
+The notebook installs the package from GitHub, generates identical deterministic
+datasets, and reproduces the same drift detection, gate evaluation, and
+publication-blocking behavior observed locally.
+
+| Step | Evidence | Screenshot |
+| ---- | -------- | ---------- |
+| Workspace setup | Notebook loaded in Databricks Free Edition | ![Notebook in workspace](docs/images/ch2/01-notebook-workspace.png) |
+| Data generation | Baseline (diverse) vs drifted (collapsed) tables | ![Baseline vs drifted](docs/images/ch2/02-baseline-vs-drifted.png) |
+| Drift detection | Per-column stability comparison, 4 of 5 collapsed | ![Drift detection](docs/images/ch2/03-drift-detection.png) |
+| Health + gates | Health score 0.20, 6 gate verdicts evaluated | ![Health and gates](docs/images/ch2/04-health-gates.png) |
+| Publication decision | Gold refresh BLOCKED | ![Publication blocked](docs/images/ch2/05-publication-blocked.png) |
+| Audit record | Provenance envelope with full field coverage | ![Provenance](docs/images/ch2/06-provenance-envelope.png) |
+
+**Scope disclaimer:** This validates the release-control pattern using
+deterministic sample data in a Databricks Free Edition workspace. It does not
+constitute production deployment, multi-source verification, or live Databricks
+production execution.
+
 ## How the control works
 
 1. `BaselineSnapshot.from_dataframe(...)` captures a trusted baseline across the
@@ -53,6 +76,7 @@ Technical details, formulas, and file-level architecture are in
 - `config/kpi_thresholds.json`: six release-control thresholds
 - `data/sample/`: checked-in CSVs for the baseline and drifted loads
 - `notebooks/04_stability_deep_dive.py`: Databricks-style walkthrough notebook
+- `notebooks/05_free_edition_validation.py`: Free Edition validation with evidence
 - `tests/`: 50 tests spanning entropy, baseline, drift, gates, provenance, and
   integration behavior
 

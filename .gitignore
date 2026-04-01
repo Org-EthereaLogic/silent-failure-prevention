@@ -32,3 +32,9 @@ docs/images/*.png
 # Run outputs
 runs/
 output/
+
+# Browser automation artifacts
+.playwright-cli/
+
+# Ignore insiders AI rules
+.github/instructions/codacy.instructions.md
