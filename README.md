@@ -2,11 +2,13 @@
 
 **Enterprise Data Trust — Chapter 2**
 
-This repository implements a release-control pattern for the Silver-to-Gold
-boundary: compare a current load against a trusted baseline, measure
-distribution stability across monitored business columns, evaluate explicit
-publication gates, and emit an audit envelope before any Gold refresh is
-allowed.
+Built by Anthony Johnson | EthereaLogic LLC
+
+---
+
+The most expensive data failures are the ones nobody catches. A source system defaults a business field to a single value. A category mix collapses after an upstream migration. Row counts reconcile. Jobs complete on schedule. Dashboards refresh. And the CFO presents numbers to the board that no longer reflect reality.
+
+This repository implements a **release-control pattern** that detects silent distribution drift and blocks Gold publication before corrupted data reaches executive dashboards.
 
 ## Verified demo outcome
 
@@ -26,6 +28,32 @@ locally with `PYTHONPATH=src python -m stability.runners`:
 
 This is the intended control behavior: the data shape still looks healthy, but
 the business signal has collapsed in four monitored columns.
+
+## Decision / KPI contract
+
+**Business decision:** should the current data load be published to executive dashboards?
+
+The release control answers that question with five metrics:
+
+| KPI | Meaning |
+|-----|---------|
+| `health_score` | Aggregate distribution stability across monitored columns (0.0–1.0) |
+| `columns_drifted` | Count of columns whose distribution has shifted beyond threshold |
+| `columns_drifted_ratio` | Proportion of monitored columns exhibiting drift |
+| `overall_verdict` | PASS / WARN / FAIL based on 6 configurable gates |
+| `provenance_field_coverage` | Completeness of the audit envelope (1.0 = all fields populated) |
+
+**Control rule:** Gold publication is blocked when `health_score` falls below `0.70`. The stability gate is the decisive check — all other gates (fidelity, quality pass rate, provenance, quarantine ratio) provide supporting evidence.
+
+## Why this pattern
+
+Traditional pipeline monitoring catches structural failures: missing files, broken schemas, null values, duplicate keys. It does not catch **silent distribution drift** — where data retains its schema and row counts while the underlying business signal degrades.
+
+This pattern addresses three gaps that standard monitoring leaves open:
+
+- **Distribution stability is measured, not assumed.** Each monitored column is scored against a trusted baseline using normalized entropy. A column that collapses from 5 distinct values to 1 scores 0.0 regardless of whether the schema and row count are intact.
+- **Publication gates are configurable and auditable.** Six gates with explicit thresholds are evaluated on every run. Each gate emits a PASS, WARN, or FAIL verdict with the measured value recorded alongside the threshold.
+- **The audit envelope is built automatically.** Every run produces a provenance record with timestamps, per-column evidence, gate outcomes, and the overall verdict — ready for governance review without manual assembly.
 
 ## Databricks Free Edition evidence
 
@@ -52,19 +80,13 @@ production execution.
 
 ## How the control works
 
-1. `BaselineSnapshot.from_dataframe(...)` captures a trusted baseline across the
-   monitored business columns.
-2. `detect_drift(...)` recomputes normalized entropy scores for the current
-   load, compares them to baseline scores, and classifies each column as
-   `stable`, `collapsed`, or `spiked`.
-3. `evaluate_gates(...)` loads six threshold rules from
-   `config/kpi_thresholds.json` and produces per-gate verdicts plus an overall
-   verdict.
-4. `build_provenance(...)` assembles the run timestamp, drift evidence, row
-   counts, and gate outcomes into an audit-friendly envelope.
+1. A trusted baseline is captured across the monitored business columns.
+2. Each new load is measured against that baseline to determine whether distribution stability has been maintained.
+3. Per-column results are aggregated into a table health score.
+4. Six configurable release gates evaluate whether Gold publication is allowed, warned, or blocked.
+5. A provenance envelope captures the run context, verdict, and drift evidence for auditability.
 
-Technical details, formulas, and file-level architecture are in
-[docs/technical-approach.md](docs/technical-approach.md).
+The measurement technique is Shannon entropy — a well-established information-theoretic measure of distribution diversity. Technical details, formulas, and gate definitions are in [docs/technical-approach.md](docs/technical-approach.md).
 
 ## Repository map
 
@@ -83,33 +105,23 @@ Technical details, formulas, and file-level architecture are in
 ## Reproducibility
 
 ```bash
+git clone https://github.com/Org-EthereaLogic/silent-failure-prevention.git
+cd silent-failure-prevention
+
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-PYTHONPATH=src python -m pytest -q
-PYTHONPATH=src python -m stability.runners
+PYTHONPATH=src python -m pytest -q          # Expected: 50 passed
+PYTHONPATH=src python -m stability.runners  # Expected: Health 0.20, FAIL
 ```
-
-To regenerate the checked-in sample CSVs:
-
-```bash
-PYTHONPATH=src python -m stability.sample_data
-```
-
-## Notebook walkthrough
-
-The notebook at [notebooks/04_stability_deep_dive.py](notebooks/04_stability_deep_dive.py)
-mirrors the local runner in a Databricks-friendly format: load baseline and
-drifted data, inspect per-column results, review gate outcomes, and inspect the
-provenance envelope.
 
 ## Part of a series
 
-This is **Chapter 2** of the *Enterprise Data Trust* portfolio.
+This is **Chapter 2** of the *Enterprise Data Trust* portfolio — a three-part body of work addressing the full lifecycle of data reliability in enterprise Databricks platforms.
 
 | Chapter | Focus | Repository |
 | ------- | ----- | ---------- |
 | 1. Trusted Source Intake | Validate and certify data before downstream consumption | [trusted-source-intake](https://github.com/Org-EthereaLogic/trusted-source-intake) |
-| **2. Silent Failure Prevention** | Detect distribution drift before it reaches executive dashboards | Current repository |
-| 3. Measurable Control Effectiveness | Prove that data controls hold against known challenge cases | [measurable-control-effectiveness](https://github.com/Org-EthereaLogic/measurable-control-effectiveness) |
+| **2. Silent Failure Prevention** | Detect distribution drift before it reaches executive dashboards | ← You are here |
+| 3. Measurable Control Effectiveness | Prove that data controls hold against known failure scenarios | [measurable-control-effectiveness](https://github.com/Org-EthereaLogic/measurable-control-effectiveness) |
 
 MIT License. See [LICENSE.md](LICENSE.md) for details.
