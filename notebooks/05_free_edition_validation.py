@@ -20,7 +20,10 @@
 # COMMAND ----------
 
 # MAGIC %pip install git+https://github.com/Org-EthereaLogic/silent-failure-prevention.git
-# MAGIC dbutils.library.restartPython()
+
+# COMMAND ----------
+
+dbutils.library.restartPython()
 
 # COMMAND ----------
 
