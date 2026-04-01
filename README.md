@@ -1,6 +1,6 @@
-# Silent Failure Prevention
+# Before Corrupted Numbers Reach the Board, Block the Refresh
 
-**Enterprise Data Trust — Chapter 2**
+**Enterprise Data Trust — Chapter 2: Silent Failure Prevention**
 
 Built by Anthony Johnson | EthereaLogic LLC
 
@@ -8,99 +8,100 @@ Built by Anthony Johnson | EthereaLogic LLC
 
 The most expensive data failures are the ones nobody catches. A source system defaults a business field to a single value. A category mix collapses after an upstream migration. Row counts reconcile. Jobs complete on schedule. Dashboards refresh. And the CFO presents numbers to the board that no longer reflect reality.
 
-This repository implements a **release-control pattern** that detects silent distribution drift and blocks Gold publication before corrupted data reaches executive dashboards.
+This chapter demonstrates a release control that detects when business columns collapse despite healthy schema and row counts — and blocks Gold publication before corrupted numbers reach executive dashboards.
 
-## Verified demo outcome
+Standard pipeline monitoring catches structural failures. It does not catch silent signal collapse — where data retains its shape while the business meaning degrades. That gap is what this chapter closes.
 
-The current checked-in implementation produces the following output when run
-locally with `PYTHONPATH=src python -m stability.runners`:
+## Executive Summary
 
-| Metric | Observed value |
-| ------ | -------------- |
-| Columns checked | `5` |
-| Columns drifted | `4` |
-| Health score | `0.2000` |
-| Schema match | `True` |
-| Baseline rows | `25` |
-| Current rows | `25` |
-| Overall verdict | `FAIL` |
-| Publication decision | Gold refresh blocked |
+| Leadership question | Answer |
+| ------------------- | ------ |
+| What business risk does this address? | Business columns collapse to a single value after an upstream change. Schema and row counts look healthy. Dashboards refresh with numbers that no longer reflect reality. |
+| What does this chapter prove? | A release-control pattern that measures distribution stability across monitored columns, evaluates six configurable gates, and blocks Gold publication when the health score drops. |
+| Why does it matter? | Executive dashboards are the highest-trust surface in the data platform. This pattern prevents corrupted numbers from reaching them by blocking the refresh before it happens. |
 
-This is the intended control behavior: the data shape still looks healthy, but
-the business signal has collapsed in four monitored columns.
+## Key Exhibits
 
-## Decision / KPI contract
+### Exhibit 1: Gold Refresh Blocked
+
+The release control detected distribution collapse across four of five monitored business columns and blocked Gold publication. This is the control doing its job — preventing corrupted numbers from reaching executive dashboards.
+
+<p align="center">
+  <img src="docs/images/ch2/05-publication-blocked.png" alt="Gold refresh BLOCKED after distribution drift detection" width="900"/>
+</p>
+
+### Exhibit 2: Per-Column Drift Detection
+
+Each monitored column is scored individually against the trusted baseline. Four of five columns collapsed from diverse distributions to single values — producing a table health score of 0.20 against a threshold of 0.70.
+
+<p align="center">
+  <img src="docs/images/ch2/03-drift-detection.png" alt="Per-column stability comparison showing 4 of 5 columns drifted" width="900"/>
+</p>
+
+### Exhibit 3: Six-Gate Evaluation
+
+Six configurable release gates evaluate whether Gold publication is allowed, warned, or blocked. Each gate emits a verdict with the measured value recorded alongside the threshold.
+
+<p align="center">
+  <img src="docs/images/ch2/04-health-gates.png" alt="Six-gate evaluation with stability health score 0.20 vs threshold 0.70 = FAIL" width="900"/>
+</p>
+
+## The Business Problem
+
+Traditional pipeline monitoring catches structural failures but leaves a dangerous blind spot:
+
+- **Distribution collapse is invisible to schema checks.** A column that held five distinct region codes yesterday now holds one. The schema is intact. The row count matches. The dashboard updates. The numbers are wrong.
+- **Signal degradation compounds silently.** When a source system defaults a business field after a migration, the first refresh looks normal. By the time someone notices, weeks of reports are corrupted.
+- **Publication has no quality gate.** Most pipelines publish to Gold on a schedule. There is no check between "transformation completed" and "executive dashboard refreshed" that validates whether the business signal survived.
+
+These are not hypothetical risks. They are the failure class that produces board-level data incidents.
+
+## What This Repository Proves
+
+| Verified outcome | Evidence from this repository |
+| ---------------- | ----------------------------- |
+| Distribution collapse is detected before publication | 4 of 5 monitored columns collapsed; health score dropped to 0.20 |
+| Publication is blocked when signal degrades | Gold refresh BLOCKED when health score fell below 0.70 threshold |
+| Gate evaluation is configurable and auditable | 6 gates with explicit thresholds, measured values, and PASS/WARN/FAIL verdicts |
+| Audit envelope is built automatically | Provenance record with timestamps, per-column evidence, and gate outcomes |
+
+## Decision / KPI Contract
 
 **Business decision:** should the current data load be published to executive dashboards?
 
-The release control answers that question with five metrics:
-
 | KPI | Meaning |
-|-----|---------|
+| --- | ------- |
 | `health_score` | Aggregate distribution stability across monitored columns (0.0–1.0) |
 | `columns_drifted` | Count of columns whose distribution has shifted beyond threshold |
 | `columns_drifted_ratio` | Proportion of monitored columns exhibiting drift |
 | `overall_verdict` | PASS / WARN / FAIL based on 6 configurable gates |
 | `provenance_field_coverage` | Completeness of the audit envelope (1.0 = all fields populated) |
 
-**Control rule:** Gold publication is blocked when `health_score` falls below `0.70`. The stability gate is the decisive check — all other gates (fidelity, quality pass rate, provenance, quarantine ratio) provide supporting evidence.
+**Control rule:** Gold publication is blocked when `health_score` falls below `0.70`. The stability gate is the decisive check — all other gates provide supporting evidence.
 
-## Why this pattern
+## Why This Pattern
 
-Traditional pipeline monitoring catches structural failures: missing files, broken schemas, null values, duplicate keys. It does not catch **silent distribution drift** — where data retains its schema and row counts while the underlying business signal degrades.
+- **Gap 1.** Distribution stability must be measured, not assumed. A column that collapses from five distinct values to one scores 0.0 regardless of whether the schema and row count are intact.
+- **Gap 2.** Publication gates must be configurable and auditable. Six gates with explicit thresholds are evaluated on every run. Each gate emits a verdict with the measured value recorded alongside the threshold.
+- **Gap 3.** The audit envelope must be built automatically. Every run produces a provenance record with timestamps, per-column evidence, gate outcomes, and the overall verdict — ready for governance review without manual assembly.
 
-This pattern addresses three gaps that standard monitoring leaves open:
+## How It Works
 
-- **Distribution stability is measured, not assumed.** Each monitored column is scored against a trusted baseline using normalized entropy. A column that collapses from 5 distinct values to 1 scores 0.0 regardless of whether the schema and row count are intact.
-- **Publication gates are configurable and auditable.** Six gates with explicit thresholds are evaluated on every run. Each gate emits a PASS, WARN, or FAIL verdict with the measured value recorded alongside the threshold.
-- **The audit envelope is built automatically.** Every run produces a provenance record with timestamps, per-column evidence, gate outcomes, and the overall verdict — ready for governance review without manual assembly.
+1. **Baseline capture.** A trusted baseline is captured across the monitored business columns using normalized Shannon entropy.
+2. **Distribution measurement.** Each new data load is measured against that baseline to determine whether distribution stability has been maintained.
+3. **Health scoring.** Per-column results are aggregated into a table health score (0.0–1.0).
+4. **Gate evaluation.** Six configurable release gates evaluate whether Gold publication is allowed, warned, or blocked.
+5. **Provenance envelope.** A provenance record captures the run context, verdict, and drift evidence for auditability.
 
-## Databricks Free Edition evidence
+Technical details, formulas, and gate definitions are in [docs/technical-approach.md](docs/technical-approach.md).
 
-The same release-control pattern was validated in a live Databricks Free Edition
-workspace by running
-[`notebooks/05_free_edition_validation.py`](notebooks/05_free_edition_validation.py).
-The notebook installs the package from GitHub, generates identical deterministic
-datasets, and reproduces the same drift detection, gate evaluation, and
-publication-blocking behavior observed locally.
+## Databricks Fit
 
-| Step | Evidence | Screenshot |
-| ---- | -------- | ---------- |
-| Workspace setup | Notebook loaded in Databricks Free Edition | ![Notebook in workspace](docs/images/ch2/01-notebook-workspace.png) |
-| Data generation | Baseline (diverse) vs drifted (collapsed) tables | ![Baseline vs drifted](docs/images/ch2/02-baseline-vs-drifted.png) |
-| Drift detection | Per-column stability comparison, 4 of 5 collapsed | ![Drift detection](docs/images/ch2/03-drift-detection.png) |
-| Health + gates | Health score 0.20, 6 gate verdicts evaluated | ![Health and gates](docs/images/ch2/04-health-gates.png) |
-| Publication decision | Gold refresh BLOCKED | ![Publication blocked](docs/images/ch2/05-publication-blocked.png) |
-| Audit record | Provenance envelope with full field coverage | ![Provenance](docs/images/ch2/06-provenance-envelope.png) |
-
-**Scope disclaimer:** This validates the release-control pattern using
-deterministic sample data in a Databricks Free Edition workspace. It does not
-constitute production deployment, multi-source verification, or live Databricks
-production execution.
-
-## How the control works
-
-1. A trusted baseline is captured across the monitored business columns.
-2. Each new load is measured against that baseline to determine whether distribution stability has been maintained.
-3. Per-column results are aggregated into a table health score.
-4. Six configurable release gates evaluate whether Gold publication is allowed, warned, or blocked.
-5. A provenance envelope captures the run context, verdict, and drift evidence for auditability.
-
-The measurement technique is Shannon entropy — a well-established information-theoretic measure of distribution diversity. Technical details, formulas, and gate definitions are in [docs/technical-approach.md](docs/technical-approach.md).
-
-## Repository map
-
-- `src/stability/detection/`: entropy scoring, baseline snapshots, drift logic
-- `src/stability/gates/`: configurable pass/warn/fail gate evaluation
-- `src/stability/provenance/`: audit envelope builder
-- `src/stability/runners/`: local demo entry point
-- `src/stability/sample_data.py`: deterministic baseline and drifted datasets
-- `config/kpi_thresholds.json`: six release-control thresholds
-- `data/sample/`: checked-in CSVs for the baseline and drifted loads
-- `notebooks/04_stability_deep_dive.py`: Databricks-style walkthrough notebook
-- `notebooks/05_free_edition_validation.py`: Free Edition validation with evidence
-- `tests/`: 50 tests spanning entropy, baseline, drift, gates, provenance, and
-  integration behavior
+- **Distribution stability scoring** maps to the Silver-to-Gold boundary in a Medallion Architecture.
+- **Publication gates** block Gold refresh before corrupted data reaches executive dashboards.
+- **Provenance envelopes** provide governance and audit documentation for Unity Catalog lineage.
+- **Serverless compute** in Databricks Free Edition validated the full release-control pattern.
+- The pattern is column-agnostic and applies to any monitored table regardless of source system.
 
 ## Reproducibility
 
@@ -114,7 +115,27 @@ PYTHONPATH=src python -m pytest -q          # Expected: 50 passed
 PYTHONPATH=src python -m stability.runners  # Expected: Health 0.20, FAIL
 ```
 
-## Part of a series
+## Evidence Appendix
+
+| Evidence item | What it shows |
+| ------------- | ------------- |
+| ![Notebook in workspace](docs/images/ch2/01-notebook-workspace.png) | Validation notebook loaded in Databricks Free Edition workspace |
+| ![Baseline vs drifted](docs/images/ch2/02-baseline-vs-drifted.png) | Baseline (diverse) vs drifted (collapsed) datasets generated |
+| ![Provenance envelope](docs/images/ch2/06-provenance-envelope.png) | Audit-ready provenance record with full field coverage |
+
+## Scope Boundary
+
+This validates the release-control pattern using deterministic sample data in a Databricks Free Edition workspace. It does not constitute production deployment, multi-source verification, or live Databricks production execution. The demonstration models a five-column business table designed to trigger distribution collapse.
+
+## Engineering Signals
+
+- GitHub Actions workflow: [ci.yml](https://github.com/Org-EthereaLogic/silent-failure-prevention/actions/workflows/ci.yml)
+
+## Additional Documentation
+
+- [Technical approach and gate definitions](docs/technical-approach.md)
+
+## Part of a Series
 
 This is **Chapter 2** of the *Enterprise Data Trust* portfolio — a three-part body of work addressing the full lifecycle of data reliability in enterprise Databricks platforms.
 
