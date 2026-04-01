@@ -103,16 +103,32 @@ Technical details, formulas, and gate definitions are in [docs/technical-approac
 - **Serverless compute** in Databricks Free Edition validated the full release-control pattern.
 - The pattern is column-agnostic and applies to any monitored table regardless of source system.
 
+## Portfolio Install Order
+
+Install Chapter One first. `trusted-source-intake` is the canonical home of the
+portfolio launcher:
+
+- `Open Executive Demo.command`
+- `scripts/executive_mode.py`
+- `docs/executive_mode.md`
+
+For the launcher to discover this chapter automatically, clone
+`silent-failure-prevention` into the same parent directory as
+`trusted-source-intake`.
+
 ## Reproducibility
+
+Use Python 3.10 or newer.
 
 ```bash
 git clone https://github.com/Org-EthereaLogic/silent-failure-prevention.git
 cd silent-failure-prevention
 
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
 pip install -e ".[dev]"
-PYTHONPATH=src python -m pytest -q          # Expected: 50 passed
-PYTHONPATH=src python -m stability.runners  # Expected: Health 0.20, FAIL
+pytest -q        # Expected: 50 passed
+stability-demo   # Expected: Health 0.20, FAIL
 ```
 
 ## Evidence Appendix
@@ -138,6 +154,9 @@ This validates the release-control pattern using deterministic sample data in a 
 ## Part of a Series
 
 This is **Chapter 2** of the *Enterprise Data Trust* portfolio — a three-part body of work addressing the full lifecycle of data reliability in enterprise Databricks platforms.
+
+Install Chapter One first if you want the guided portfolio launcher. This
+chapter is designed to run as a sibling repository beside `trusted-source-intake`.
 
 | Chapter | Focus | Repository |
 | ------- | ----- | ---------- |

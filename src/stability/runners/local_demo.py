@@ -4,7 +4,7 @@ Loads sample baseline and drifted data, runs the full detection → gate
 evaluation → provenance pipeline, and prints a human-readable report.
 
 Usage:
-    PYTHONPATH=src python -m stability.runners
+    stability-demo
 """
 
 from __future__ import annotations
@@ -133,3 +133,9 @@ def print_demo_report() -> dict:
     print()
 
     return results
+
+
+def main() -> int:
+    """Console entry point for the release-control demo."""
+    print_demo_report()
+    return 0

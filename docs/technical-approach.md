@@ -152,7 +152,7 @@ That scenario yields:
 `src/stability/runners/__main__.py` exposes the CLI entry point:
 
 ```bash
-PYTHONPATH=src python -m stability.runners
+stability-demo
 ```
 
 ### Notebook
@@ -180,7 +180,8 @@ Databricks Free Edition workspace. Evidence screenshots are in `docs/images/ch2/
 ## Local validation commands
 
 ```bash
+python -m pip install --upgrade pip setuptools wheel
 pip install -e ".[dev]"
-PYTHONPATH=src python -m pytest -q
-PYTHONPATH=src python -m stability.runners
+pytest -q
+stability-demo
 ```

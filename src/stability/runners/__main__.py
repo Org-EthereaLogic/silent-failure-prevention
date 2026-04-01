@@ -1,5 +1,7 @@
 """Allow running as: python -m stability.runners"""
 
-from stability.runners.local_demo import print_demo_report
+from stability.runners.local_demo import main
 
-print_demo_report()
+
+if __name__ == "__main__":
+    raise SystemExit(main())
