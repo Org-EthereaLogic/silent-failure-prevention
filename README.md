@@ -1,5 +1,7 @@
 # Silent Failure Prevention
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/82de4005e40346929c375feb29e5f97e)](https://app.codacy.com/gh/Org-EthereaLogic/silent-failure-prevention?utm_source=github.com&utm_medium=referral&utm_content=Org-EthereaLogic/silent-failure-prevention&utm_campaign=Badge_Grade)
+
 **Enterprise Data Trust — Chapter 2**
 
 Built by Anthony Johnson | EthereaLogic LLC
