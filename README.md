@@ -6,6 +6,10 @@ Built by Anthony Johnson | EthereaLogic LLC
 
 ---
 
+> If this pattern is useful to your team, consider [starring the repo](https://github.com/Org-EthereaLogic/silent-failure-prevention) — it helps others in the Databricks community find it.
+
+---
+
 The most expensive data failures are the ones nobody catches. A source system defaults a business field to a single value. A category mix collapses after an upstream migration. Row counts reconcile. Jobs complete on schedule. Dashboards refresh. And the CFO presents numbers to the board that no longer reflect reality.
 
 This chapter demonstrates a release control that detects when business columns collapse despite healthy schema and row counts — and blocks Gold publication before corrupted numbers reach executive dashboards.
